@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Greenhouse Management System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('dashboard') }}">
+                <i class="fas fa-seedling"></i> Greenhouse Management System
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <span class="navbar-text text-white" id="last-updated">
+                            <i class="fas fa-sync-alt fa-spin me-2"></i> Last update: Loading...
+                        </span>
+                    </li>
+                </ul>
+                <ul class="navbar-nav ms-auto">
+                    {% if session.user_role == 'admin' %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('user_management') }}">
+                            <i class="fas fa-users-cog me-1"></i> Users
+                        </a>
+                    </li>
+                    {% endif %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('logout') }}">
+                            <i class="fas fa-sign-out-alt me-1"></i> Logout
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <span class="nav-link">
+                            <i class="fas fa-user-circle me-1"></i> {{ session.user_name }}
+                        </span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Welcome message that shows briefly and fades out -->
+        <div class="welcome-message mb-4" id="welcome-message">
+            <div class="alert alert-success d-flex align-items-center" role="alert">
+                <i class="fas fa-info-circle me-2"></i>
+                <div>
+                    Welcome to your Greenhouse Dashboard - Monitoring your plants' environment in real-time
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0"><i class="fas fa-temperature-high me-2"></i>Temperature</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <div class="gauge-container">
+                            <div class="gauge-meter">
+                                <div class="gauge-dial"></div>
+                                <div class="gauge-needle" id="temp-needle"></div>
+                            </div>
+                            <div class="gauge-value" id="current-temperature">--</div>
+                            <div class="gauge-min-max">
+                                <span id="temp-range-min">18°C</span>
+                                <span id="temp-range-max">28°C</span>
+                            </div>
+                        </div>
+                        <p class="lead">°C</p>
+                        <div class="status-indicator">
+                            <span id="temp-status-icon" class="status-circle"></span>
+                            <span id="temp-status-text">Unknown</span>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <div class="row text-center">
+                            <div class="col">
+                                <small><i class="fas fa-arrow-down text-primary"></i> Min</small>
+                                <p id="temp-min">--</p>
+                            </div>
+                            <div class="col">
+                                <small><i class="fas fa-equals text-primary"></i> Avg</small>
+                                <p id="temp-avg">--</p>
+                            </div>
+                            <div class="col">
+                                <small><i class="fas fa-arrow-up text-primary"></i> Max</small>
+                                <p id="temp-max">--</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="card-title mb-0"><i class="fas fa-tint me-2"></i>Humidity</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <div class="gauge-container">
+                            <div class="gauge-meter">
+                                <div class="gauge-dial"></div>
+                                <div class="gauge-needle" id="humidity-needle"></div>
+                            </div>
+                            <div class="gauge-value" id="current-humidity">--</div>
+                            <div class="gauge-min-max">
+                                <span id="humidity-range-min">40%</span>
+                                <span id="humidity-range-max">80%</span>
+                            </div>
+                        </div>
+                        <p class="lead">%</p>
+                        <div class="status-indicator">
+                            <span id="humidity-status-icon" class="status-circle"></span>
+                            <span id="humidity-status-text">Unknown</span>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <div class="row text-center">
+                            <div class="col">
+                                <small><i class="fas fa-arrow-down text-info"></i> Min</small>
+                                <p id="humidity-min">--</p>
+                            </div>
+                            <div class="col">
+                                <small><i class="fas fa-equals text-info"></i> Avg</small>
+                                <p id="humidity-avg">--</p>
+                            </div>
+                            <div class="col">
+                                <small><i class="fas fa-arrow-up text-info"></i> Max</small>
+                                <p id="humidity-max">--</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="card-title mb-0"><i class="fas fa-sun me-2"></i>Light Level</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <div class="gauge-container">
+                            <div class="gauge-meter">
+                                <div class="gauge-dial"></div>
+                                <div class="gauge-needle" id="light-needle"></div>
+                            </div>
+                            <div class="gauge-value" id="current-light">--</div>
+                            <div class="gauge-min-max">
+                                <span id="light-range-min">300</span>
+                                <span id="light-range-max">800</span>
+                            </div>
+                        </div>
+                        <p class="lead">Lux</p>
+                        <div class="status-indicator">
+                            <span id="light-status-icon" class="status-circle"></span>
+                            <span id="light-status-text">Unknown</span>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <div class="row text-center">
+                            <div class="col">
+                                <small><i class="fas fa-arrow-down text-warning"></i> Min</small>
+                                <p id="light-min">--</p>
+                            </div>
+                            <div class="col">
+                                <small><i class="fas fa-equals text-warning"></i> Avg</small>
+                                <p id="light-avg">--</p>
+                            </div>
+                            <div class="col">
+                                <small><i class="fas fa-arrow-up text-warning"></i> Max</small>
+                                <p id="light-max">--</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0"><i class="fas fa-chart-line me-2"></i>Environment Trends</h5>
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-sm btn-light time-filter active" data-hours="24">24h</button>
+                            <button type="button" class="btn btn-sm btn-light time-filter" data-hours="48">48h</button>
+                            <button type="button" class="btn btn-sm btn-light time-filter" data-hours="168">7d</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="trends-chart" height="250"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header bg-secondary text-white">
+                        <h5 class="card-title mb-0"><i class="fas fa-desktop me-2"></i>System Status</h5>
+                    </div>
+                    <div class="card-body">
+                        <table class="table">
+                            <tbody>
+                                <tr class="fade-in" style="animation-delay: 0.1s;">
+                                    <th scope="row"><i class="fas fa-wifi me-2"></i>Connection Status</th>
+                                    <td id="connection-status" class="loading">Loading...</td>
+                                </tr>
+                                <tr class="fade-in" style="animation-delay: 0.2s;">
+                                    <th scope="row"><i class="fas fa-clock me-2"></i>Last Data Received</th>
+                                    <td id="last-data-time" class="loading">--</td>
+                                </tr>
+                                <tr class="fade-in" style="animation-delay: 0.3s;">
+                                    <th scope="row"><i class="fas fa-database me-2"></i>Readings Today</th>
+                                    <td id="readings-count" class="loading">--</td>
+                                </tr>
+                                <tr class="fade-in" style="animation-delay: 0.4s;">
+                                    <th scope="row"><i class="fas fa-hourglass-half me-2"></i>Uptime</th>
+                                    <td id="system-uptime" class="loading">--</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        
+                        <div class="mt-4">
+                            <h6 class="mb-3"><i class="fas fa-sliders-h me-2"></i>Optimal Ranges</h6>
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Sensor</th>
+                                        <th>Min</th>
+                                        <th>Max</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="fade-in" style="animation-delay: 0.5s;">
+                                        <td><i class="fas fa-temperature-high text-primary me-2"></i>Temperature</td>
+                                        <td>18°C</td>
+                                        <td>28°C</td>
+                                    </tr>
+                                    <tr class="fade-in" style="animation-delay: 0.6s;">
+                                        <td><i class="fas fa-tint text-info me-2"></i>Humidity</td>
+                                        <td>40%</td>
+                                        <td>80%</td>
+                                    </tr>
+                                    <tr class="fade-in" style="animation-delay: 0.7s;">
+                                        <td><i class="fas fa-sun text-warning me-2"></i>Light Level</td>
+                                        <td>300</td>
+                                        <td>800</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer mt-auto py-3">
+        <div class="container text-center">
+            <span class="text-muted">Greenhouse Management System</span>
+            <div class="mt-2">
+                <i class="fas fa-seedling me-1"></i>
+                <small id="footer-date"></small>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+    
+    <!-- Fade-in animation for table rows -->
+    <style>
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out forwards;
+            opacity: 0;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</body>
+</html>
